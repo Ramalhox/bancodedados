@@ -1,0 +1,328 @@
+CREATE DATABASE hospital;
+USE hospital;
+
+CREATE TABLE especialidade (
+  id_especialidade INT AUTO_INCREMENT PRIMARY KEY,
+  nome_especialidade VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE convenio (
+  id_convenio INT AUTO_INCREMENT PRIMARY KEY,
+  nome_convenio VARCHAR(200) NOT NULL,
+  CNPJ_empresa VARCHAR(18),
+  tempo_de_carencia INT DEFAULT 0
+);
+
+CREATE TABLE tipo_quarto (
+  id_tipo INT AUTO_INCREMENT PRIMARY KEY,
+  descricao VARCHAR(200) NOT NULL,
+  valor_diaria DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE quarto (
+  id_quarto INT AUTO_INCREMENT PRIMARY KEY,
+  numero VARCHAR(50) NOT NULL,
+  tipo INT NOT NULL,
+  FOREIGN KEY (tipo) REFERENCES tipo_quarto(id_tipo)
+);
+
+CREATE TABLE medico (
+  id_medico INT AUTO_INCREMENT PRIMARY KEY,
+  CRM VARCHAR(50) NOT NULL,
+  nome VARCHAR(200) NOT NULL,
+  telefone VARCHAR(40),
+  email VARCHAR(200),
+  id_convenio INT,
+  FOREIGN KEY (id_convenio) REFERENCES convenio(id_convenio),
+  UNIQUE KEY uq_medico_crm (CRM)
+);
+
+CREATE TABLE paciente (
+  id_paciente INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(200) NOT NULL,
+  CPF VARCHAR(14) NOT NULL,
+  RG VARCHAR(11),
+  dtNasc DATE,
+  email VARCHAR(200),
+  telefone VARCHAR(13),
+  endereco VARCHAR(255),
+  convenio INT,
+  carteirinha VARCHAR(120),
+  FOREIGN KEY (convenio) REFERENCES convenio(id_convenio),
+  UNIQUE KEY uq_paciente_cpf (CPF)
+);
+
+CREATE TABLE consulta (
+  id_consulta INT AUTO_INCREMENT PRIMARY KEY,
+  medico_CRM VARCHAR(50) NOT NULL,
+  CPF_paciente VARCHAR(14) NOT NULL,
+  data_hora DATETIME NOT NULL,
+  id_especialidade INT,
+  id_convenio INT,
+  observacao TEXT,
+  FOREIGN KEY (medico_CRM)       REFERENCES medico(CRM),
+  FOREIGN KEY (CPF_paciente)     REFERENCES paciente(CPF),
+  FOREIGN KEY (id_especialidade) REFERENCES especialidade(id_especialidade),
+  FOREIGN KEY (id_convenio)      REFERENCES convenio(id_convenio)
+);
+
+CREATE TABLE receita (
+  id_receita INT AUTO_INCREMENT PRIMARY KEY,
+  id_consulta INT NOT NULL,
+  data_emissao DATE,
+  instrucoes TEXT,
+  FOREIGN KEY (id_consulta) REFERENCES consulta(id_consulta)
+);
+
+CREATE TABLE receita_medicamento (
+  id_receita_med INT AUTO_INCREMENT PRIMARY KEY,
+  id_receita INT NOT NULL,
+  medicamento VARCHAR(2000) NOT NULL,
+  quantidade VARCHAR(200),
+  posologia VARCHAR(2000),
+  FOREIGN KEY (id_receita) REFERENCES receita(id_receita)
+);
+
+CREATE TABLE medico_especialidade (
+  id_med_esp INT AUTO_INCREMENT PRIMARY KEY,
+  id_medico INT NOT NULL,
+  id_especialidade INT NOT NULL,
+  observacao VARCHAR(2000),
+  FOREIGN KEY (id_medico)        REFERENCES medico(id_medico),
+  FOREIGN KEY (id_especialidade) REFERENCES especialidade(id_especialidade)
+);
+
+CREATE TABLE enfermeiro (
+  id_enfermeiro INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(200) NOT NULL,
+  CPF VARCHAR(14),
+  COREN VARCHAR(60)
+);
+
+CREATE TABLE internacao (
+  id_internacao INT AUTO_INCREMENT PRIMARY KEY,
+  data_entrada DATETIME NOT NULL,
+  data_prevista_alta DATE,
+  data_efetiva_alta DATETIME,
+  descricao_procedimento VARCHAR(200),
+  paciente_CPF VARCHAR(14) NOT NULL,
+  enfermeiro_responsavel INT,
+  quarto_paciente INT NOT NULL,
+  medico_CRM VARCHAR(50) NOT NULL,
+  FOREIGN KEY (paciente_CPF)           REFERENCES paciente(CPF),
+  FOREIGN KEY (enfermeiro_responsavel) REFERENCES enfermeiro(id_enfermeiro),
+  FOREIGN KEY (quarto_paciente)        REFERENCES quarto(id_quarto),
+  FOREIGN KEY (medico_CRM)             REFERENCES medico(CRM)
+);
+
+CREATE TABLE internacao_enfermeiro (
+  id_int_enf INT AUTO_INCREMENT PRIMARY KEY,
+  id_internacao INT NOT NULL,
+  id_enfermeiro INT NOT NULL,
+  papel VARCHAR(120),
+  FOREIGN KEY (id_internacao) REFERENCES internacao(id_internacao),
+  FOREIGN KEY (id_enfermeiro) REFERENCES enfermeiro(id_enfermeiro)
+);
+
+INSERT INTO convenio (nome_convenio, CNPJ_empresa, tempo_de_carencia) VALUES
+('SaúdeFácil','12.345.678/0001-01',30),
+('BemEstar S/A','98.765.432/0001-99',60),
+('UniMed Local','11.222.333/0001-44',0),
+('MedPlus Empresarial','55.666.777/0001-55',90);
+
+INSERT INTO especialidade (nome_especialidade) VALUES
+('Pediatria'),
+('Clínica Geral'),
+('Gastroenterologia'),
+('Dermatologia'),
+('Cardiologia'),
+('Ortopedia'),
+('Neurologia'),
+('Psiquiatria');
+
+INSERT INTO tipo_quarto (descricao, valor_diaria) VALUES
+('Apartamento',450.00),
+('Quarto Duplo',300.00),
+('Enfermaria',120.00);
+
+INSERT INTO quarto (numero, tipo) VALUES
+('A101',1),
+('D202',2),
+('E301',3),
+('A102',1),
+('D203',2);
+
+INSERT INTO medico (CRM, nome, telefone, email, id_convenio) VALUES
+('1001','Dr. Carlos Almeida','(11)99990001','carlos.almeida@hosp.com',1),
+('1002','Dra. Marina Souza','(11)99990002','marina.souza@hosp.com',2),
+('1003','Dr. João Pereira','(11)99990003','joao.pereira@hosp.com',NULL),
+('1004','Dra. Ana Costa','(11)99990004','ana.costa@hosp.com',3),
+('1005','Dr. Felipe Rocha','(11)99990005','felipe.rocha@hosp.com',NULL),
+('1006','Dra. Luciana Dias','(11)99990006','luciana.dias@hosp.com',4),
+('1007','Dr. Marcos Lima','(11)99990007','marcos.lima@hosp.com',1),
+('1008','Dra. Beatriz Nunes','(11)99990008','beatriz.nunes@hosp.com',2),
+('1009','Dr. Ricardo Alves','(11)99990009','ricardo.alves@hosp.com',NULL),
+('1010','Dra. Paula Fernandes','(11)99990010','paula.fernandes@hosp.com',3);
+
+INSERT INTO enfermeiro (nome, CPF, COREN) VALUES
+('Enf João Silva','11111111111','COREN-1001'),
+('Enf Maria Souza','22222222222','COREN-1002'),
+('Enf Pedro Alves','33333333333','COREN-1003'),
+('Enf Carla Mendes','44444444444','COREN-1004'),
+('Enf Ricardo Torres','55555555555','COREN-1005'),
+('Enf Paula Ribeiro','66666666666','COREN-1006'),
+('Enf Sandra Lima','77777777777','COREN-1007'),
+('Enf Lucas Ferreira','88888888888','COREN-1008'),
+('Enf Fernanda Costa','99999999999','COREN-1009'),
+('Enf Eduardo Rocha','00000000000','COREN-1010');
+
+INSERT INTO paciente (nome, CPF, RG, dtNasc, email, telefone, endereco, convenio, carteirinha) VALUES
+('Gabriel Lindo','12345678900','12345678','1990-03-12','gabriel.lindo@mail.com','11988880001','Rua A, 100',1,'SF-0001'),
+('Mariana Moura','22345678911','22222222','1985-07-09','mariana.moura@mail.com','11988880002','Av. B, 200',2,'BE-0421'),
+('Pedro Victor','32345678922','33333333','1975-01-30','pedro.victor@mail.com','11988880003','Rua C, 30',NULL,NULL),
+('Ana Julia','42345678933','44444444','2005-10-12','ana.julia@mail.com','11988880004','Rua D, 45',3,'UM-1002'),
+('Carlos Eduardo','52345678944','55555555','1968-05-22','carlos.edu@mail.com','11988880005','Av. E, 123',NULL,NULL),
+('Leticya Arantes','62345678955','66666666','1998-12-01','leticya.arantes@mail.com','11988880006','Rua F, 77',1,'SF-0022'),
+('Bruno Mendes','72345678966','77777777','2012-06-05','bruno.mendes@mail.com','11988880007','Rua G, 9',2,'BE-0099'),
+('Sofia Ribeiro','82345678977','88888888','1992-11-21','sofia.r@mail.com','11987770008','Av. H, 88',NULL,NULL),
+('Agatha Yasminn','92345678988','99999999','1955-02-02','agatha.yasminn@mail.com','11988890009','Rua I, 5',4,'MP-5500'),
+('Patrícia Gomes','02345678999','00000111','1989-09-16','patricia.gomes@mail.com','11988800010','Rua J, 101',NULL,NULL),
+('Mateus Rocha','12312312312','12121212','2000-04-04','mateus.rocha@mail.com','11988840011','Rua K, 13',NULL,NULL),
+('Gabriela Santos','23423423423','23232323','1979-08-08','gabriela.santos@mail.com','11978880012','Av. L, 14',NULL,NULL),
+('Vitor Almeida','34534534534','34343434','1960-12-31','vitor.almeida@mail.com','11989880013','Rua M, 15',3,'UM-2030'),
+('Julia Soares','45645645645','45454545','1995-05-05','julia.soares@mail.com','11988480514','Rua N, 16',NULL,NULL),
+('Wellington Aguiar','56756756756','56565656','1982-02-20','wells.aguiar@mail.com','11989880015','Av. O, 17',NULL,NULL);
+
+INSERT INTO internacao (data_entrada, data_prevista_alta, data_efetiva_alta,
+descricao_procedimento, paciente_CPF, enfermeiro_responsavel, quarto_paciente, medico_CRM) VALUES
+('2015-02-01 10:00:00','2015-02-06','2015-02-06 14:00:00','Cateterismo','12345678900',1,1,'1001'),
+('2016-11-10 09:00:00','2016-11-13','2016-11-12 12:00:00','Avaliação cardiológica','12345678900',1,1,'1001'),
+('2017-03-01 08:00:00','2017-03-09','2017-03-08 16:00:00','Apendicectomia','72345678966',2,2,'1006'),
+('2017-06-05 07:00:00','2017-06-10','2017-06-10 15:00:00','Infecção e observação','72345678966',3,2,'1002'),
+('2018-05-15 12:00:00','2018-05-21','2018-05-20 10:00:00','Osteossíntese','32345678922',4,2,'1005'),
+('2019-09-01 09:30:00','2019-09-12','2019-09-10 11:00:00','Endoscopia e hidratação','52345678944',6,3,'1006'),
+('2020-12-22 18:00:00','2021-01-05','2021-01-02 10:00:00','Observação clínica','32345678922',10,3,'1001');
+
+INSERT INTO internacao_enfermeiro (id_internacao, id_enfermeiro, papel) VALUES
+(1,1,'Plantão diurno'),
+(1,2,'Auxiliar enfermagem'),
+(2,1,'Plantão noturno'),
+(2,3,'Auxiliar enfermagem'),
+(3,4,'Plantão diurno'),
+(3,5,'Auxiliar enfermagem'),
+(4,6,'Plantão diurno'),
+(4,7,'Auxiliar enfermagem'),
+(5,8,'Plantão diurno'),
+(5,9,'Auxiliar enfermagem'),
+(6,10,'Plantão diurno'),
+(6,2,'Auxiliar enfermagem'),
+(7,4,'Plantão noturno'),
+(7,5,'Auxiliar enfermagem');
+
+INSERT INTO medico_especialidade (id_medico, id_especialidade, observacao) VALUES
+(1,5,'Cardiologista'),
+(1,2,'Clínica Geral'),
+(2,1,'Pediatria'),
+(2,4,'Dermatologia Infantil'),
+(3,2,'Clínica Geral'),
+(4,4,'Dermatologia'),
+(5,6,'Ortopedia'),
+(6,3,'Gastroenterologia'),
+(7,2,'Clínica Geral'),
+(8,4,'Dermatologia'),
+(9,7,'Neurologia'),
+(10,8,'Psiquiatria');
+
+INSERT INTO consulta (medico_CRM, CPF_paciente, data_hora, id_especialidade, id_convenio, observacao) VALUES
+('1002','72345678966','2015-01-15 09:00:00',1,2,'Consulta pediatria - rotina'),
+('1002','42345678933','2015-02-10 10:30:00',1,3,'Vacinação / avaliação'),
+('1003','12345678900','2016-03-05 14:00:00',2,NULL,'Clínica geral - cefaleia'),
+('1006','52345678944','2016-06-20 11:00:00',3,NULL,'Gastro - refluxo'),
+('1004','12312312312','2016-08-12 15:00:00',4,NULL,'Dermato - erupção'),
+('1001','92345678988','2017-01-10 08:30:00',5,4,'Cardio - rotina'),
+('1005','32345678922','2017-03-22 13:45:00',6,NULL,'Ortopedia - entorse'),
+('1007','22345678911','2017-05-05 10:00:00',2,1,'Clínica Geral - acompanhamento'),
+('1008','23423423423','2018-02-14 09:15:00',4,NULL,'Dermato - estética'),
+('1009','34534534534','2018-04-10 16:00:00',7,3,'Neurologia - avaliação'),
+('1010','45645645645','2018-07-30 11:20:00',8,NULL,'Psiquiatria - 1ª consulta'),
+('1006','12345678900','2019-09-12 09:00:00',3,1,'Gastro - acompanhamento'),
+('1002','72345678966','2019-11-01 10:30:00',1,2,'Pediatria - retorno'),
+('1003','82345678977','2020-01-20 14:15:00',2,NULL,'Clínica geral - febre'),
+('1004','02345678999','2020-03-25 15:30:00',4,NULL,'Dermato - exame'),
+('1001','62345678955','2020-06-05 08:00:00',5,1,'Cardio - eletro'),
+('1005','22345678911','2020-09-10 13:00:00',6,2,'Ortopedia - cirurgia menor'),
+('1009','32345678922','2021-05-18 10:00:00',7,NULL,'Neurologia - dor crônica'),
+('1010','56756756756','2021-07-07 09:30:00',8,NULL,'Psiquiatria - retorno'),
+('1006','45645645645','2021-12-15 11:45:00',3,NULL,'Gastro - exame');
+
+INSERT INTO receita (id_consulta, data_emissao, instrucoes) VALUES
+(1,'2015-01-15','Tomar conforme prescrição'),
+(2,'2015-02-10','Uso conforme orientação'),
+(3,'2016-03-05','Retornar em 7 dias'),
+(4,'2016-06-20','Após refeições'),
+(5,'2016-08-12','Aplicar tópico 2x/dia'),
+(6,'2017-01-10','Tomar 1/dia'),
+(7,'2017-03-22','Fisioterapia recomendada'),
+(8,'2017-05-05','Retorno em 30 dias'),
+(9,'2018-02-14','Hidratar e evitar exposição'),
+(10,'2018-04-10','Acompanhamento'),
+(11,'2018-07-30','Plano psiquiatria'),
+(12,'2019-09-12','Tratamento gastro'),
+(13,'2019-11-01','Retorno pediatria'),
+(14,'2020-01-20','Sintomas virais'),
+(15,'2020-03-25','Dermato');
+
+INSERT INTO receita_medicamento (id_receita, medicamento, quantidade, posologia) VALUES
+(1,'Amoxicilina 500mg','20 caps','1 cáps 8/8h'),
+(1,'Paracetamol 500mg','10 comp','1 comp se febre'),
+(2,'Dipirona 500mg','10 comp','Se dor'),
+(2,'Soro fisiológico 0,9%','1 frasco','Uso tópico'),
+(3,'Ibuprofeno 400mg','12 comp','1 comp 8/8h'),
+(4,'Omeprazol 20mg','30 caps','1x/dia'),
+(4,'Domperidona 10mg','20 comp','1 antes das refeições'),
+(4,'Polivitamínico','30 comp','1x/dia'),
+(5,'Clotrimazol creme 20g','1 tubo','Aplicar 2x/dia'),
+(5,'Hidrocortisona 1%','1 tubo','Aplicar à noite'),
+(6,'Losartan 50mg','30 comp','1x/dia'),
+(6,'AAS 100mg','30 comp','1x/dia'),
+(7,'Ibuprofeno 400mg','20 comp','Se dor'),
+(7,'Relaxante muscular','10 comp','Ao deitar'),
+(8,'Amoxicilina 500mg','21 caps','1 8/8h'),
+(8,'Cetoprofeno 50mg','10 comp','Se dor'),
+(9,'Metronidazol 250mg','20 comp','1 12/12h'),
+(9,'Hidratante corporal','1 frasco','Aplicar diariamente'),
+(10,'Carbamazepina 200mg','60 comp','1 12/12h'),
+(10,'Vitamina B12','6 ampolas','1 amp mensal'),
+(10,'Ansiolítico leve','20 comp','Conforme orientação'),
+(11,'Sertralina 50mg','30 comp','1x/dia'),
+(11,'Clonazepam 0.5mg','10 comp','Se insônia'),
+(12,'Omeprazol 20mg','30 caps','1x/dia'),
+(12,'Sucralfato','20 comp','1 antes de comer'),
+(13,'Paracetamol 500mg','10 comp','Se febre'),
+(13,'Xarope antitussígeno','1 frasco','Conforme bula'),
+(14,'Dipirona 500mg','10 comp','Se febre'),
+(15,'Betametasona creme','1 tubo','Aplicar 2x/dia'),
+(15,'Hidratante facial','1 frasco','Aplicar diariamente');
+
+/*
+Crie um script que adicione uma coluna “em_atividade” para os médicos, indicando se ele ainda está atuando no hospital ou não. 
+Crie um script para atualizar ao menos dois médicos como inativos e os demais em atividade. */
+
+ALTER TABLE medico ADD COLUMN em_atividade BOOLEAN DEFAULT 1;
+
+UPDATE medico SET em_atividade = 0
+WHERE CRM IN ('1001', '1003');
+
+UPDATE medico SET em_atividade = 1
+WHERE id_medico NOT IN (1, 3);
+
+-- visualizar médicos ativos e médicos inativos
+SELECT 
+    CRM,
+    nome,
+    em_atividade,
+    CASE 
+        WHEN em_atividade = 1 THEN 'Ativo'
+        ELSE 'Inativo'
+    END AS status_medico
+FROM medico;
