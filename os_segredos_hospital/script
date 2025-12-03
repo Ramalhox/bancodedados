@@ -1,0 +1,53 @@
+
+medico {
+	id_medico integer pk increments
+	CRM integer
+	nome varchar(200)
+	telefone integer
+	email varchar(200)
+	especialidade integer
+}
+
+paciente {
+	id_paciente timestamp pk increments unique
+	nome varchar(200)
+	CPF varchar(11)
+	RG varchar(9)
+	dtNasc date
+	email varchar(200)
+	telefone integer
+	endereco varchar(200)
+	convenio integer
+}
+
+quarto {
+	id_quarto integer pk increments unique
+	numero integer
+	tipo integer > tipo_quarto.id_tipo
+}
+
+tipo_quarto {
+	id_tipo integer pk increments unique
+	descricao varchar(200)
+	valor_diaria decimal
+}
+
+internacao {
+	id_internacao integer pk increments unique
+	data_entrada datetime
+	data_prevista_alta date
+	data_efetiva_alta datetime
+	descricao_procedimento varchar(200)
+	paciente integer > paciente.CPF
+	enfermeiro_responsavel integer > enfermeiro.id_enfermeiro
+	quarto_paciente integer > quarto.id_quarto
+	medico_responsavel integer > medico.CRM
+}
+
+enfermeiro {
+	id_enfermeiro integer pk increments unique
+	nome varchar(200)
+	CPF varchar(11)
+	COREN varchar(50)
+}
+
